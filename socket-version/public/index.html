@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+</head>
+<body>
+<canvas id='gameCanvas'></canvas>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  window.game = {players:[]}
+  window.thisPlayer = null
+  window.otherPlayer = null
+
+  var socket = io()//{transports:['websocket']})//'http://localhost', {port: 3000, transports: ["websocket"]});
+  socket.on('connect', function(){
+    console.log('socket connected '+this.id)
+  });
+  function findPlayerIndex(id){
+    ind = null
+    game.players.forEach(function(player,i){
+      //console.log('a player: '+player.id)
+      if (player.id === '/#'+id){
+        ind = i
+      }
+    })
+    return ind
+  }
+  socket.on('update',function(data){
+    game = data
+    //console.log('finding '+this.id)
+    var thisPlayerIndex = findPlayerIndex(this.id)
+    thisPlayer = game.players[thisPlayerIndex]
+    if (thisPlayerIndex === 0){
+      otherPlayer = game.players[1]
+    }else{
+      otherPlayer = game.players[0]
+    }
+    //console.log('this:'+thisPlayer.id+', other:'+otherPlayer.id)
+    draw()
+    //this.emit('action',action)
+  })
+
+  var canvas = document.getElementById('gameCanvas')
+  var ctx = canvas.getContext('2d')
+  canvas.width = 500
+  canvas.height = 500
+  ctx.translate(canvas.width/2,canvas.height/2)
+
+  window.board = {
+    p:{x:0,y:canvas.height/2-20},
+    field:{x:0,y:100,w:canvas.width-40,h:canvas.height/5}
+  }
+
+  function draw() {
+    ctx.fillStyle = 'hsl(100,0%,20%)'
+    ctx.fillRect(-canvas.width/2,-canvas.height/2,canvas.width,canvas.height)
+
+    drawBoth(drawPlayer)
+    drawBoth(drawField)
+  }
+
+  function drawBoth(func){
+    // p1 style
+    ctx.fillStyle = 'hsl(200,70%,40%)'
+    func()
+    ctx.fillStyle = 'hsl(100,70%,40%)'
+    ctx.save()
+    ctx.scale(1, -1)
+    func()
+    ctx.restore()
+  }
+  function drawPlayer(){
+    ctx.beginPath()
+    ctx.arc(board.p.x,board.p.y,50,0,Math.PI*2)
+    ctx.fill()
+  }
+  function drawField(){
+    ctx.fillStyle = 'hsl(200,0%,40%)'
+    ctx.fillRect(board.field.x-board.field.w/2,board.field.y-board.field.h/2,board.field.w,board.field.h)
+  }
+
+</script>
+
+</body>
+</html>

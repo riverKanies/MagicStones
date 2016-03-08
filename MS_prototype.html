@@ -1,0 +1,375 @@
+
+<canvas id="canvas" ></canvas>
+
+<script >
+// shim layer with setTimeout fallback
+window.requestAnimFrame = (function(){
+  return  window.requestAnimationFrame       ||
+          window.webkitRequestAnimationFrame ||
+          window.mozRequestAnimationFrame    ||
+          window.oRequestAnimationFrame      ||
+          window.msRequestAnimationFrame     ||
+          function(/* function */ callback, /* DOMElement */ element){
+            window.setTimeout(callback, 1000 / 60);
+          };
+})();
+</script>
+<script>
+window.onload = init
+//        *******      INIT     *******
+function init(){
+  window.canvas = document.getElementById('canvas')
+  canvas.width = canvas.height = 500
+  window.ctx = canvas.getContext('2d')
+  ctx.translate(canvas.width/2,canvas.height/2)
+
+  window.mousePos = {}
+  window.targeter = null
+  canvas.addEventListener('mousemove', function(evt) {
+    mousePos = getMousePos(canvas, evt);
+  }, false);
+  canvas.addEventListener('mousedown', function(evt) {
+    //check if viewCard belongs to activePlayer
+    if(collideMvRect(endBtn)) {
+      //end turn
+      console.log('end turn for player '+activePlayer.playerNum)
+      if(activePlayer.playerNum === 1) {
+        activePlayer = player2
+      }else{
+        activePlayer = player1
+        if(mana.count < 10)mana.count +=1
+      }
+//start turn
+      mana.full = mana.count
+      activePlayer.hand.push(randomCreature(getRandomIntInclusive(1,6),'hand',activePlayer))
+      return
+    }
+    if(viewCard && viewCard.owner === activePlayer){
+      console.log('targeting from '+viewCard.in)
+      targeter = {
+        from:viewCard,
+        to:null
+      }
+    }else{
+      console.log("it's not their turn...")
+    }
+  }, false);
+  canvas.addEventListener('mouseup', function(evt) {
+    if(targeter){
+      console.log(targeter.from+' targeting: '+mousePos.x+', '+mousePos.y)
+      if(targeter.from.in === 'hand'){
+        //check for collision with playzone
+        collideMvPz()//playing creature in zone (or spell ...)
+        targeter = null
+      }else if(targeter.from.in === 'field'){
+        collideMvCr()//creature attacking creature
+        targeter = null
+      }
+    }
+  }, false);
+
+  window.cardWidth = 20
+  window.viewCard = null
+  window.mouseOverCard = false
+
+  Player.prototype.drawHand = function(){
+    var playerNum = this.playerNum
+    var numCards = this.hand.length
+    var x0 = -((numCards-1) * (2+cardWidth/2))
+    var hue = 150+50*playerNum
+    var color = 'hsl('+hue+',70%,60%)'// this sets it, but p1's cards are p2 color
+    ctx.fillStyle = color//'hsl('+hue+',70%,60%)'
+    ctx.strokeStyle = 'hsl('+hue+',10%,60%)'
+    ctx.beginPath()//somehow this fixed the fillStyle...
+    for(var i=0; i<numCards; i++){
+      var cardX = this.hand[i].x = playerNum * (x0 + i * (cardWidth+4))
+      var cardY = this.hand[i].y = playerNum * 3 * canvas.height/8
+      ctx.rect(cardX-cardWidth/2, cardY-cardWidth, cardWidth, 2 * cardWidth)
+      ctx.fill()
+      ctx.stroke()
+    }
+  }
+  Player.prototype.drawField = function(){
+    var playerNum = this.playerNum
+    var numCards = this.field.length
+    var x0 = -((numCards-1) * (2+cardWidth/2))
+    var hue = 150+50*playerNum
+    var color = 'hsl('+hue+',70%,60%)'// this sets it, but p1's cards are p2 color
+    ctx.fillStyle = color//'hsl('+hue+',70%,60%)'
+    ctx.strokeStyle = 'hsl('+hue+',10%,60%)'
+    ctx.beginPath()//somehow this fixed the fillStyle...
+    for(var i=0; i<numCards; i++){
+      var cardX = this.field[i].x = playerNum * (x0 + i * (cardWidth+4))
+      var cardY = this.field[i].y = playerNum * 3 * canvas.height/28
+      ctx.rect(cardX-cardWidth/2, cardY-cardWidth, cardWidth, 2 * cardWidth)
+      ctx.fill()
+      ctx.stroke()
+    }
+  }
+  Player.prototype.sayHello = function(){
+    console.log('hi '+this.playerNum)
+  }
+  Player.prototype.collideMvC = function(){
+    this.hand.forEach(function(card){
+      if(mousePos.x<card.x+cardWidth/2 && mousePos.x>card.x-cardWidth/2
+      && mousePos.y<card.y+cardWidth && mousePos.y > card.y - cardWidth){
+        viewCard = card
+        mouseOverCard = true
+      }
+    })
+    this.field.forEach(function(card){
+      if(mousePos.x<card.x+cardWidth/2 && mousePos.x>card.x-cardWidth/2
+      && mousePos.y<card.y+cardWidth && mousePos.y > card.y - cardWidth){
+        viewCard = card
+        mouseOverCard = true
+      }
+    })
+  }
+
+  player1 = new Player(1)
+  player2 = new Player(-1)
+  player2.sayHello()
+  window.activePlayer = player1
+  window.inactivePlayer = function (){
+    if(activePlayer === player1){
+      return player2
+    }else{
+      return player1
+    }
+  }
+
+  playZone1 = {
+    x:-canvas.width/2+20,
+    y:10,
+    w:canvas.width-40,
+    h:90
+  }
+  playZone2 = { //-canvas.width/2+20,-10,canvas.width-40,-90
+    x:-canvas.width/2+20,
+    y:-100,
+    w:canvas.width-40,
+    h:90
+  }
+  mana = {
+    x:-240,
+    y:-10,
+    w:200,
+    h:20,
+    count:1,
+    full:1
+  }
+
+  var w = 50
+  window.endBtn = {x:canvas.width/2-w,y:-w/4,w:w,h:w/2}
+
+  tick()
+
+}
+
+function collideMvRect(rect){
+  if(mousePos.x<rect.x+rect.w&&mousePos.x>rect.x&&mousePos.y<rect.y+rect.h&&mousePos.y>rect.y){
+    return true
+  }
+}
+
+function playCreature(){
+  activePlayer.hand.forEach(function(card,i){
+    if(card === targeter.from){
+      card.in = 'field'
+      activePlayer.field.push(activePlayer.hand.splice(i,1)[0])
+    }
+  })
+}
+
+function collideMvPz(){
+  //should check that it's the zone for the player whose turn it is...
+  if(activePlayer === player1){
+    var pz = playZone1
+  }else if(activePlayer === player2){
+    var pz = playZone2
+  }
+  if(collideMvRect(pz)){
+    var cost = targeter.from.cost
+    if(cost <= mana.full){
+      mana.full -= cost
+      playCreature()
+    }else{
+      console.log('not enough mana')
+    }
+  }
+}
+
+function collideMvCr(){
+  // I really need to separate concerns by player so that I can ensure
+  //players play in their own field, attack with their own creatures,
+  //and attack creatures on their opponent's side only
+  inactivePlayer().field.forEach(function(card){
+    if(mousePos.x<card.x+cardWidth/2 && mousePos.x>card.x-cardWidth/2
+    && mousePos.y<card.y+cardWidth && mousePos.y > card.y - cardWidth){
+      console.log('player'+activePlayer.playerNum+' attacking with '+targeter.from.atk+' atk to '+card.def+' def')
+      card.def -= targeter.from.atk
+      targeter.from.def -= card.atk
+      removeDead()
+    }
+  })
+}
+function removeDead(){
+  var defrs = inactivePlayer().field
+  for (var i=defrs.length-1; i>-0.5; i--){
+    if(defrs[i].def<1)defrs.splice(i,1)
+  }
+  var atkrs = activePlayer.field
+  for (var i=atkrs.length-1; i>-0.5; i--){
+    if(atkrs[i].def<1)atkrs.splice(i,1)
+  }
+}
+
+function getMousePos(canvas, evt) {
+  var rect = canvas.getBoundingClientRect();
+  return {
+    x: evt.clientX - rect.left - canvas.width/2,
+    y: evt.clientY - rect.top - canvas.height/2
+  };
+}
+function Player(playerNum){
+  this.playerNum = playerNum //1 or -1 for flipping axes
+  this.x = 0
+  this.y = playerNum * (canvas.height/2 - 5)
+  this.hand = [
+    randomCreature(1,'hand',this),
+    randomCreature(2,'hand',this),
+    randomCreature(3,'hand',this)
+  ],
+  this.field = [
+    //randomCreature(6,'field',this),
+    //randomCreature(6,'field',this)
+  ]
+}
+function randomCreature(cost, place, player){
+  var magic = getRandomIntInclusive(0,2)
+  if(magic > cost-1) magic = cost-1
+  var effect = magic > 0 ? ('has '+magic+' magic') : ''
+  var weight = Math.floor(getRandomIntInclusive(0,cost-1) - cost/3)
+  return({
+    cost: cost,
+    atk: cost - magic + weight,
+    def: cost - magic - weight + 1,
+    effect: effect,
+    in: place,
+    owner: player
+  })
+}
+function tick() {
+  update()
+  draw()
+  window.requestAnimFrame(tick)
+  //window.setTimeout(tick, 1000)
+}
+function update(){
+  mouseOverCard = false
+  player1.collideMvC()
+  player2.collideMvC()
+  if(!mouseOverCard){
+    viewCard = null
+  }
+}
+function drawZone(zone){
+  ctx.fillRect(zone.x,zone.y,zone.w,zone.h)
+}
+function drawRect(rect){
+  ctx.beginPath()
+  ctx.rect(rect.x,rect.y, rect.w, rect.h)
+  ctx.fill()
+  ctx.stroke()
+}
+
+function draw(){
+  //background
+  ctx.fillStyle = 'hsl(100,0%,20%)'
+  ctx.fillRect(-canvas.width/2,-canvas.height/2,canvas.width,canvas.height)
+    //ctx.fillRect(0,0,canvas.width,canvas.height)
+
+  //battle field
+  ctx.fillStyle = 'hsl(100,0%,40%)'
+  drawZone(playZone1)
+  drawZone(playZone2)
+
+  //end turn button
+  ctx.fillStyle = 'hsl(45,70%,60%)'
+  ctx.strokeStyle = 'hsl(50,10%,60%)'
+  ctx.beginPath()
+  ctx.rect(endBtn.x,endBtn.y, endBtn.w, endBtn.h)
+  ctx.fill()
+  ctx.stroke()
+  ctx.fillStyle = 'hsl(100,0%,20%)'
+  ctx.font = 10+"px Arial";
+  ctx.fillText('End Turn',endBtn.x+5,endBtn.y+15);
+
+  //mana
+  ctx.fillStyle = 'hsl(45,0%,60%)'
+  ctx.strokeStyle = 'hsl(250,10%,60%)'
+  drawRect(mana)
+  for(var i=0; i<mana.count; i++){
+    if(mana.full>i){
+      ctx.fillStyle = 'hsl(220,90%,50%)'
+      ctx.strokeStyle = 'hsl(250,50%,90%)'
+    }else{
+      ctx.fillStyle = 'hsl(220,30%,40%)'
+      ctx.strokeStyle = 'hsl(250,50%,80%)'
+    }
+    ctx.beginPath()
+    ctx.arc(mana.x+10+i*20,0,8,0,2*Math.PI)//x,y,r,a1,a2
+    ctx.fill()
+    ctx.stroke()
+  }
+
+  //players
+  ctx.fillStyle = 'hsl(200,70%,40%)'
+  ctx.beginPath()
+  ctx.arc(player1.x,player1.y,50,0,2*Math.PI)//x,y,r,a1,a2
+  ctx.fill()
+  ctx.fillStyle = 'hsl(100,70%,40%)'
+  ctx.beginPath()
+  ctx.arc(player2.x,player2.y,50,0,2*Math.PI)//x,y,r,a1,a2
+  ctx.fill()
+  ctx.closePath()
+
+  player1.drawHand()
+  player2.drawHand()
+  player1.drawField()
+  player2.drawField()
+// cursor
+  ctx.fillStyle = 'hsla(200,30%,60%, 0.3)'
+  ctx.beginPath()
+  ctx.arc(mousePos.x,mousePos.y,10,0,2*Math.PI)//x,y,r,a1,a2
+  ctx.fill()
+//viewCard
+  if(viewCard){
+    ctx.fillStyle = 'hsl(300,0%,70%)'
+    var w = 140 // width (used as scale)
+    var offX = -canvas.width/3
+    ctx.beginPath()
+    ctx.rect(-w/2+offX,-w, w, 2 * w)
+    ctx.fill()
+    ctx.stroke()
+    ctx.fillStyle = 'hsl(100,0%,20%)'
+    ctx.font = w/8+"px Arial";
+    ctx.fillText(viewCard.atk+"/"+viewCard.def,w/4+offX,w - w/5);
+    ctx.fillText(viewCard.effect,-w/2+w/10+offX,w/2);
+    ctx.fillText(viewCard.cost,-w/2+w/10+offX,-w +w/5);
+  }
+//targeter
+  if(targeter){
+    var t = targeter
+    ctx.strokeStyle = 'hsl(0,70%,50%)'
+    ctx.beginPath();
+    ctx.moveTo(t.from.x,t.from.y);
+    ctx.lineTo(mousePos.x,mousePos.y);
+    ctx.stroke();
+  }
+
+}
+function getRandomIntInclusive(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+</script>
