@@ -1,0 +1,8 @@
+/* CSS declarations go here */
+.field {
+  position: absolute;
+  left: 10%;
+  width: 80%;
+  height: 30%;
+  background-color: grey;
+}
