@@ -15,14 +15,16 @@ App = React.createClass({
   render() {
     console.log('rendering app')
     window.game = this.data.game
-    //console.log(Meteor.userId())
     return(
       <div>
         <AccountsUIWrapper /><br/>
         { this.data.currentUser && game ?
-          <CanvasTest data={game}/>
-        :
-          <GamesList />}
+          <div>
+            <p>Game {game._id._str}: {game.players[0]} VS. {game.players[1]}</p>
+            <CanvasTest data={game}/>
+          </div>
+        :''}
+        <GamesList />
       </div>
     )
   }

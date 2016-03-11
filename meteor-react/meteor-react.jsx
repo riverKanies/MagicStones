@@ -16,7 +16,6 @@ if (Meteor.isClient) {
 }
 
 if(Meteor.isServer){
-  console.log(this.userId)
   Meteor.publish('games', function(){
     //db.games.insert({p:{x:10,y:10},players:["mZ6KM6RWmKEkiynFz","eaBeXEtDq23gRHG2n"]})
     //following query will match userId agains all values in the players array (as if it were a single player id)
@@ -31,8 +30,16 @@ if(Meteor.isServer){
 
 Meteor.methods({
   move(gameId,p){
+    //needs security
     Games.update(gameId, {
       $set: {p: p}
     })
+  },
+  createGame(){
+    var currentGame = Games.findOne({$and:[{players:Meteor.userId()},{players:{$size:2}}]})
+    var currentUser = Meteor.userId()
+    if(!currentGame && currentUser){
+      Games.insert({p:{x:0,y:0},players:[currentUser]})
+    }
   }
 })
