@@ -4,7 +4,7 @@ App = React.createClass({
     if (!gameId) {
       // data isn't immediatelly available on client. iron-router wiatOn solves this...
       // it looks like flow router doesn't allow anything like waitOn, so I'll user iron...?
-      window.game = Games.findOne()
+      window.game = Games.findOne({$and:[{players:Meteor.userId()},{players:{$size:2}}]})
       window.gameId = game?game._id:null
     }
     return {

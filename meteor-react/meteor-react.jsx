@@ -20,7 +20,12 @@ if(Meteor.isServer){
   Meteor.publish('games', function(){
     //db.games.insert({p:{x:10,y:10},players:["mZ6KM6RWmKEkiynFz","eaBeXEtDq23gRHG2n"]})
     //following query will match userId agains all values in the players array (as if it were a single player id)
-    return Games.find({"players":this.userId})
+    return Games.find({
+      $or:[
+        {players:this.userId},
+        {players:{$size:1}}
+      ]
+    })
   })
 }
 
