@@ -9,6 +9,7 @@ CanvasTest = React.createClass({
 })
 
 function drawCanvas(c){
+  if(!c) return //for some reason this get's called after canvas get's removed...
   c.width = c.height = 500
   var ctx = c.getContext('2d')
   ctx.translate(c.width/2,c.height/2)
@@ -19,11 +20,13 @@ function drawCanvas(c){
   ctx.fillRect(0,0,100,100)
   ctx.fillRect(game.p.x,game.p.y,100,100)
 
-  c.addEventListener('mousedown', function(evt) {
+  var MDlistener = function(evt) {
     mousePos = getMousePos(canvas, evt);
     //test by moving player ther
     Meteor.call('move',gameId,{x:mousePos.x,y:mousePos.y})
-  }, false);
+  }
+  c.removeEventListener('mousedown',MDlistener, false)
+  c.addEventListener('mousedown', MDlistener, false);
 }
 function getMousePos(canvas, evt) {
   var rect = canvas.getBoundingClientRect();
