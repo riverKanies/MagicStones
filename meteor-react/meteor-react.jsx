@@ -30,9 +30,13 @@ if(Meteor.isServer){
 
 Meteor.methods({
   move(gameId,p){
-    console.log('moving for ',gameId)
+    //console.log('moving for ',gameId)
     //needs security
     var game = Games.findOne(gameId)
+    if(Meteor.userId() !== game.players[game.turn]) {
+      console.log("not your turn")
+      return
+    }
     if (Meteor.userId() === game.players[0]){
       Games.update(gameId, {
         $set: {p1: p}
@@ -49,7 +53,7 @@ Meteor.methods({
     var currentGame = Games.findOne({$and:[{players:Meteor.userId()},{players:{$size:2}}]})
     var currentUser = Meteor.userId()
     if(!currentGame && currentUser){
-      Games.insert({p1:{x:0,y:0},p2:{x:10,y:10},players:[currentUser]})
+      Games.insert({turn:0,p1:{x:0,y:0},p2:{x:10,y:10},players:[currentUser]})
     }
   },
   setCurrentGame(gameId){
@@ -71,6 +75,15 @@ Meteor.methods({
     Meteor.users.update(p1id,{$set:{"profile.currentGame":null}})
     Meteor.users.update(p2id,{$set:{"profile.currentGame":null}})
     Games.remove(gameId)
-
+  },
+  endTurn(gameId){
+    var game = Games.findOne(gameId)
+    if(Meteor.userId() === game.players[game.turn]) {
+      if(game.turn === 0){
+        Games.update(gameId, {$set: {turn: 1}})
+      }else{
+        Games.update(gameId, {$set: {turn: 0}})
+      }
+    }
   }
 })
