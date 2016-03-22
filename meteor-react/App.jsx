@@ -19,7 +19,7 @@ App = React.createClass({
   render() {
     //console.log('rendering app',this.data.game)
     window.game = this.data.game
-    if(game)console.log('game: ',game,game._id._str)
+    //if(game)console.log('game: ',game,game._id._str)
     return(
       <div>
         <AccountsUIWrapper /><br/>

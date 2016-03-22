@@ -1,6 +1,7 @@
 GameItem = React.createClass({
   handleJoin(){
     console.log("joining "+this.props.game._id)
+    Meteor.call("joinGame",this.props.game._id)
   },
   render(){
     return(

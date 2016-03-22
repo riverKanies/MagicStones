@@ -30,22 +30,37 @@ if(Meteor.isServer){
 
 Meteor.methods({
   move(gameId,p){
-    //console.log('moving for ',gameId)
+    console.log('moving for ',gameId)
     //needs security
-    Games.update(gameId, {
-      $set: {p: p}
-    })
+    var game = Games.findOne(gameId)
+    if (Meteor.userId() === game.players[0]){
+      Games.update(gameId, {
+        $set: {p1: p}
+      })
+    }else if(Meteor.userId() === game.players[1]){
+      Games.update(gameId, {
+        $set: {p2: p}
+      })
+    }
+
     //console.log('moved to ',Games.findOne(gameId))
   },
   createGame(){
     var currentGame = Games.findOne({$and:[{players:Meteor.userId()},{players:{$size:2}}]})
     var currentUser = Meteor.userId()
     if(!currentGame && currentUser){
-      Games.insert({p:{x:0,y:0},players:[currentUser]})
+      Games.insert({p1:{x:0,y:0},p2:{x:10,y:10},players:[currentUser]})
     }
   },
   setCurrentGame(gameId){
     Meteor.users.update(Meteor.userId(),{$set:{"profile.currentGame":gameId}})
     console.log('current game: ',Meteor.user().profile.currentGame)
+  },
+  joinGame(gameId){
+    var gameToJoin = Games.findOne(gameId)
+    console.log('joining ',gameToJoin)
+    if(gameToJoin.players.length === 1){
+      Games.update(gameId,{$push:{players:Meteor.userId()}})
+    }
   }
 })

@@ -17,8 +17,9 @@ function drawCanvas(c){
   ctx.fillStyle = 'hsl(100,0%,20%)'
   ctx.fillRect(-c.width/2,-c.height/2,c.width,c.height)
   ctx.fillStyle = 'hsl(100,50%,20%)'
-  ctx.fillRect(0,0,100,100)
-  ctx.fillRect(game.p.x,game.p.y,100,100)
+  ctx.fillRect(game.p1.x,game.p1.y,100,100)
+  ctx.fillStyle = 'hsl(200,50%,20%)'
+  ctx.fillRect(game.p2.x,game.p2.y,100,100)
 
   //c.removeEventListener('mousedown',MDlistener, false) // not necessary
   c.addEventListener('mousedown', MDlistener, false);
