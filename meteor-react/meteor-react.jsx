@@ -16,6 +16,12 @@ if (Meteor.isClient) {
 }
 
 if(Meteor.isServer){
+  Accounts.onCreateUser(function(options, user) {
+    // This should be default meteor behavior (set profile to {})
+    user.profile = options.profile ? options.profile : {};
+    return user;
+  });
+
   Meteor.publish('games', function(){
     //db.games.insert({p:{x:10,y:10},players:["BFxJzFhuWrZARaDfZ","mWAwQaXbTcCapocfR"]})
     //following query will match userId agains all values in the players array (as if it were a single player id)
@@ -39,11 +45,11 @@ Meteor.methods({
     }
     if (Meteor.userId() === game.players[0]){
       Games.update(gameId, {
-        $set: {p1: p}
+        $set: {"p1.x": p.x,"p1.y":p.y}
       })
     }else if(Meteor.userId() === game.players[1]){
       Games.update(gameId, {
-        $set: {p2: p}
+        $set: {"p2.x": p.x, "p2.y": p.y}
       })
     }
 
@@ -53,7 +59,27 @@ Meteor.methods({
     var currentGame = Games.findOne({$and:[{players:Meteor.userId()},{players:{$size:2}}]})
     var currentUser = Meteor.userId()
     if(!currentGame && currentUser){
-      Games.insert({turn:0,p1:{x:0,y:0},p2:{x:10,y:10},players:[currentUser]})
+      Games.insert({
+        turn:0,
+        p1:{
+          x:0,
+          y:0,
+          hand:[
+            utils.randomCreature(3,'hand',0),
+            utils.randomCreature(2,'hand',0)
+          ]
+        },
+        p2:{
+          x:10,
+          y:10,
+          hand:[
+            utils.randomCreature(3,'hand',1),
+            utils.randomCreature(2,'hand',1),
+            utils.randomCreature(1,'hand',1)
+          ]
+        },
+        players:[currentUser]
+      })
     }
   },
   setCurrentGame(gameId){

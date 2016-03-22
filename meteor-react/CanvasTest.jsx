@@ -28,18 +28,29 @@ function drawCanvas(c){
   ctx.fillStyle = 'hsl(300,50%,40%)'
   ctx.fillRect(turnButton.x,turnButton.y,turnButton.w,turnButton.h)
 
+  draw.hands(ctx)
+
+  draw.viewCard(ctx)
+
   //c.removeEventListener('mousedown',MDlistener, false) // not necessary
   c.addEventListener('mousedown', MDlistener, false);
+  c.addEventListener('mousemove', MMlistener, false)
+}
+
+function MMlistener(evt){
+  mousePos = getMousePos(canvas, evt);
+  //console.log(Session.get('viewCard'))
+  utils.overCardsInHand()
 }
 
 function MDlistener(evt) {
   // must not be an anonymous function:
     // if it is, multiple event listeners will pile up and freeze browser
   //console.log('click')
-  mousePos = getMousePos(canvas, evt);
+  //mousePos = getMousePos(canvas, evt);
 
   //if clicking end button, do that and return
-  if(collideRect(mousePos,game.turnButton)){
+  if(utils.collideRect(mousePos,game.turnButton)){
     console.log('ended turn')
     Meteor.call('endTurn',game._id)
   }
@@ -49,13 +60,7 @@ function MDlistener(evt) {
   //test by moving player ther
   Meteor.call('move',game._id,{x:mousePos.x,y:mousePos.y})
 }
-function collideRect(point,rect){
-  if(point.x>rect.x && point.x<rect.x+rect.w && point.y>rect.y && point.y<rect.y+rect.h){
-    return true
-  }else{
-    return false
-  }
-}
+
 function getMousePos(canvas, evt) {
   var rect = canvas.getBoundingClientRect();
   return {
