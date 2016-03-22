@@ -16,6 +16,10 @@ App = React.createClass({
       currentUser: Meteor.user()
     }
   },
+  endGame(){
+    console.log('ending game ',game)
+    Meteor.call('endGame',game)
+  },
   render() {
     //console.log('rendering app',this.data.game)
     window.game = this.data.game
@@ -27,6 +31,9 @@ App = React.createClass({
           <div>
             <p>Game {game._id._str}: {game.players[0]} VS. {game.players[1]}</p>
             <CanvasTest data={game}/>
+            <button onClick={this.endGame}>Concede</button>
+            <br/>
+            <br/>
           </div>
         :''}
         <GamesList />

@@ -62,5 +62,15 @@ Meteor.methods({
     if(gameToJoin.players.length === 1){
       Games.update(gameId,{$push:{players:Meteor.userId()}})
     }
+  },
+  endGame(game){
+    var gameId = game._id
+    var p1id = game.players[0]
+    var p2id = game.players[1]
+    console.log(gameId,p1id,p2id)
+    Meteor.users.update(p1id,{$set:{"profile.currentGame":null}})
+    Meteor.users.update(p2id,{$set:{"profile.currentGame":null}})
+    Games.remove(gameId)
+
   }
 })
