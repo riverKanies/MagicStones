@@ -17,7 +17,7 @@ if (Meteor.isClient) {
 
 if(Meteor.isServer){
   Meteor.publish('games', function(){
-    //db.games.insert({p:{x:10,y:10},players:["mZ6KM6RWmKEkiynFz","eaBeXEtDq23gRHG2n"]})
+    //db.games.insert({p:{x:10,y:10},players:["BFxJzFhuWrZARaDfZ","mWAwQaXbTcCapocfR"]})
     //following query will match userId agains all values in the players array (as if it were a single player id)
     return Games.find({
       $or:[
@@ -30,10 +30,12 @@ if(Meteor.isServer){
 
 Meteor.methods({
   move(gameId,p){
+    //console.log('moving for ',gameId)
     //needs security
     Games.update(gameId, {
       $set: {p: p}
     })
+    //console.log('moved to ',Games.findOne(gameId))
   },
   createGame(){
     var currentGame = Games.findOne({$and:[{players:Meteor.userId()},{players:{$size:2}}]})
@@ -41,5 +43,9 @@ Meteor.methods({
     if(!currentGame && currentUser){
       Games.insert({p:{x:0,y:0},players:[currentUser]})
     }
+  },
+  setCurrentGame(gameId){
+    Meteor.users.update(Meteor.userId(),{$set:{"profile.currentGame":gameId}})
+    console.log('current game: ',Meteor.user().profile.currentGame)
   }
 })

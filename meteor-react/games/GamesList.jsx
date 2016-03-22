@@ -13,7 +13,7 @@ GamesList = React.createClass({
     console.log(Meteor.userId()+' joining game...')
   },
   renderOpenGames(){
-    console.log('open: ',this.data.openGames)
+    //console.log('open: ',this.data.openGames)
     return this.data.openGames.filter((game)=>{
       return (game.players[0] != Meteor.userId())
     }).map((game,key)=>{
@@ -23,8 +23,10 @@ GamesList = React.createClass({
     })
   },
   renderActiveGames(){
-    console.log('active: ',this.data.activeGames)
-    return this.data.activeGames.map((game,key)=>{
+    //console.log('active: ',this.data.activeGames)
+    return this.data.activeGames.filter((game)=>{
+      return true//game._id._str !== Meteor.user().profile.currentGame
+    }).map((game,key)=>{
       return <GameItemActive key={key} game={game} />
     })
   },

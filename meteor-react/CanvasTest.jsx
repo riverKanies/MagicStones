@@ -20,14 +20,19 @@ function drawCanvas(c){
   ctx.fillRect(0,0,100,100)
   ctx.fillRect(game.p.x,game.p.y,100,100)
 
-  var MDlistener = function(evt) {
-    mousePos = getMousePos(canvas, evt);
-    //test by moving player ther
-    Meteor.call('move',gameId,{x:mousePos.x,y:mousePos.y})
-  }
-  c.removeEventListener('mousedown',MDlistener, false)
+  //c.removeEventListener('mousedown',MDlistener, false) // not necessary
   c.addEventListener('mousedown', MDlistener, false);
 }
+
+function MDlistener(evt) {
+  // must not be an anonymous function:
+    // if it is, multiple event listeners will pile up and freeze browser
+  //console.log('click')
+  mousePos = getMousePos(canvas, evt);
+  //test by moving player ther
+  Meteor.call('move',game._id,{x:mousePos.x,y:mousePos.y})
+}
+
 function getMousePos(canvas, evt) {
   var rect = canvas.getBoundingClientRect();
   return {
