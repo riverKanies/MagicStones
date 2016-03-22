@@ -13,7 +13,8 @@ App = React.createClass({
     }*/
     return {
       game: Games.findOne(((Meteor.user()||{}).profile||{}).currentGame),//gameId),
-      currentUser: Meteor.user()
+      currentUser: Meteor.user(),
+      viewCard: Session.get('viewCard')
     }
   },
   endGame(){

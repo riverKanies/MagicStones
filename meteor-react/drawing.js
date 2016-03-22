@@ -26,7 +26,7 @@ draw = {
 
       ctx.fillStyle = 'hsl(300,0%,70%)'
       var w = 140 // width (used as scale)
-      var offX = -200
+      var offX = -150
       ctx.beginPath()
       ctx.rect(-w/2+offX,-w, w, 2 * w)
       ctx.fill()
